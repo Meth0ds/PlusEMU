@@ -13,6 +13,8 @@ internal static class LegacyMigrations
     /// <param name="Rerunnable">Running it again on a database that has it changes nothing that matters.</param>
     public sealed record Entry(string Id, SchemaProbe Probe, bool Rerunnable);
 
+    private static readonly SchemaProbe WiredCatalogueParity = Any(All(Column("catalog_pages", "link"), Query("SELECT COUNT(*) > 0 FROM catalog_pages WHERE link = 'plus_wired_more'")), Query("SELECT COUNT(*) > 0 FROM furniture WHERE item_name = 'conf_chooser_disable' AND type = 's' AND interaction_type = 'chooser_disable'"));
+
     public static readonly IReadOnlyList<Entry> All = new Entry[]
     {
         // 1_UpdateRoomEntryTable: drops user_roomvisits.minute and .hour (file:1-3); later files (23, 71, 72) never re-add them.
@@ -380,13 +382,12 @@ internal static class LegacyMigrations
         // rerun: UPDATE guarded by the old interaction values.
         new("78_InvisibleFurniControlInteraction.sql", Query("SELECT EXISTS (SELECT 1 FROM furniture WHERE item_name = 'conf_invis_control' AND type = 's' AND interaction_type = 'invis_control') AND NOT EXISTS (SELECT 1 FROM furniture WHERE item_name = 'conf_invis_control' AND type = 's' AND interaction_type IN ('default', 'default_floor', 'conf_invis_control'))"), Rerunnable: true),
         // 79_WiredFurnitureAndCatalogue: fixes Wired interactions, the click tile interaction (file:148-149), three placeholder names
-        // (file:152-157)
-        // and adds offers (82 later re-sorts the Wired pages, so offers are not used). Idempotent. Marker: click tile / renamed boxes carry
-        // the new
-        // values and none still has the old one. Needs 60's furniture.name.
+        // (file:152-157) and adds offers (82 later re-sorts the Wired pages, so offers are not used). Idempotent. Marker: none of the
+        // click tile / renamed boxes still has the old value, and one has the new value or (on a hotel with its own furniture, where the
+        // file changes none of them) none of them exists and 76 ran. Needs 60's furniture.name.
         // NOTE: has its own START TRANSACTION/COMMIT (file:8, 219).
         // rerun: a rerun re-adds offers that 82 moved off the Wired pages (verified: catalog_offers/products/page_offers change).
-        new("79_WiredFurnitureAndCatalogue.sql", All(Column("furniture", "name"), Query("SELECT EXISTS (SELECT 1 FROM furniture WHERE type = 's' AND ((item_name = 'room_invisible_click_tile' AND sprite_id = 14561 AND interaction_type = 'room_invisible_click_tile') OR (item_name = 'wf_trg_at_time_long' AND name = 'WIRED Trigger: At Set Time (Long)') OR (item_name = 'wf_cnd_not_wearing_b' AND name = 'WIRED Negative Condition: User Is NOT Wearing Badge') OR (item_name = 'wf_cnd_not_wearing_fx' AND name = 'WIRED Negative Condition: User Is NOT Wearing Effect'))) AND NOT EXISTS (SELECT 1 FROM furniture WHERE (item_name = 'room_invisible_click_tile' AND type = 's' AND sprite_id = 14561 AND interaction_type <> 'room_invisible_click_tile') OR (item_name IN ('wf_trg_at_time_long', 'wf_cnd_not_wearing_b', 'wf_cnd_not_wearing_fx') AND name = CONCAT(item_name, ' name')))")), Rerunnable: false),
+        new("79_WiredFurnitureAndCatalogue.sql", All(Column("furniture", "name"), Query("SELECT NOT EXISTS (SELECT 1 FROM furniture WHERE (item_name = 'room_invisible_click_tile' AND type = 's' AND sprite_id = 14561 AND interaction_type <> 'room_invisible_click_tile') OR (item_name IN ('wf_trg_at_time_long', 'wf_cnd_not_wearing_b', 'wf_cnd_not_wearing_fx') AND name = CONCAT(item_name, ' name')))"), Any(Query("SELECT EXISTS (SELECT 1 FROM furniture WHERE type = 's' AND ((item_name = 'room_invisible_click_tile' AND sprite_id = 14561 AND interaction_type = 'room_invisible_click_tile') OR (item_name = 'wf_trg_at_time_long' AND name = 'WIRED Trigger: At Set Time (Long)') OR (item_name = 'wf_cnd_not_wearing_b' AND name = 'WIRED Negative Condition: User Is NOT Wearing Badge') OR (item_name = 'wf_cnd_not_wearing_fx' AND name = 'WIRED Negative Condition: User Is NOT Wearing Effect')))"), All(Column("achievements", "official_id"), Query("SELECT NOT EXISTS (SELECT 1 FROM furniture WHERE type = 's' AND ((item_name = 'room_invisible_click_tile' AND sprite_id = 14561) OR item_name IN ('wf_trg_at_time_long', 'wf_cnd_not_wearing_b', 'wf_cnd_not_wearing_fx')))")))), Rerunnable: false),
         // 80_WiredRoomLinker: wf_room_linker interaction -> 'wired_room_linker' (file:4-6); nothing later changes it. Data-only, idempotent.
         // rerun: UPDATE guarded by the old interaction values.
         new("80_WiredRoomLinker.sql", Query("SELECT EXISTS (SELECT 1 FROM furniture WHERE item_name = 'wf_room_linker' AND type = 's' AND interaction_type = 'wired_room_linker') AND NOT EXISTS (SELECT 1 FROM furniture WHERE item_name = 'wf_room_linker' AND type = 's' AND interaction_type IN ('default', 'default_floor', 'wf_room_linker'))"), Rerunnable: true),
@@ -401,12 +402,12 @@ internal static class LegacyMigrations
         // (file:37-39, only when the 'wired2' page exists). 91 only adds a BUILDERS_CLUB copy of conf_chooser_disable offers. Idempotent.
         // NOTE: has its own START TRANSACTION/COMMIT (file:15, 423).
         // rerun: catalogue tree/page-offer replace: reverts admin catalogue edits (verified: catalog_pages/page_offers change).
-        new("82_WiredCatalogueParity.sql", Any(All(Column("catalog_pages", "link"), Query("SELECT COUNT(*) > 0 FROM catalog_pages WHERE link = 'plus_wired_more'")), Query("SELECT COUNT(*) > 0 FROM furniture WHERE item_name = 'conf_chooser_disable' AND type = 's' AND interaction_type = 'chooser_disable'")), Rerunnable: false),
+        new("82_WiredCatalogueParity.sql", WiredCatalogueParity, Rerunnable: false),
         // 83_WiredArchiveText: sets slot 0 text of the 'wired_archive' page (file:4-6). 91 creates a BUILDERS_CLUB 'wired_archive' page (id
-        // 2129322)
-        // with the same text, so that page is excluded. Idempotent.
+        // 2129322) with the same text, so that page is excluded. Idempotent. Marker: the page has the text, or 82 ran and no page still
+        // has the empty text 82 gave it (a catalogue without the page, or an admin edit).
         // rerun: unguarded overwrite of the wired_archive page text (reverts an admin edit; no change otherwise).
-        new("83_WiredArchiveText.sql", All(Table("catalog_page_texts"), Column("catalog_pages", "link"), Query("SELECT COUNT(*) > 0 FROM catalog_page_texts t JOIN catalog_pages c ON c.id = t.page_id WHERE c.link = 'wired_archive' AND c.id <> 2129322 AND t.slot = 0 AND t.text = 'Archived Wired boxes that are still available for legacy reasons, but are not recommended to use in new Wired setups'")), Rerunnable: false),
+        new("83_WiredArchiveText.sql", All(Table("catalog_page_texts"), Column("catalog_pages", "link"), Any(Query("SELECT COUNT(*) > 0 FROM catalog_page_texts t JOIN catalog_pages c ON c.id = t.page_id WHERE c.link = 'wired_archive' AND c.id <> 2129322 AND t.slot = 0 AND t.text = 'Archived Wired boxes that are still available for legacy reasons, but are not recommended to use in new Wired setups'"), All(WiredCatalogueParity, Query("SELECT NOT EXISTS (SELECT 1 FROM catalog_page_texts t JOIN catalog_pages c ON c.id = t.page_id WHERE c.link = 'wired_archive' AND c.id <> 2129322 AND t.slot = 0 AND t.text = '')")))), Rerunnable: false),
         // 84_MottoAchievementVisible: achievements ACH_Motto visible = 1 (file:5); 76 had set it to 0 and nothing later changes it.
         // Idempotent.
         // rerun: unguarded visible = 1 on ACH_Motto (reverts an admin hiding it; no change otherwise).
