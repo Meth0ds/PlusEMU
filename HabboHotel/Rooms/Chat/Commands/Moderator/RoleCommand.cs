@@ -68,7 +68,7 @@ internal abstract class RoleCommand(IDatabase database, IAccessControl access, T
         var succeeded = Assign ? access.AssignRole(actor, targetId, role.Id, expiresAt) : access.RevokeRole(actor, targetId, role.Id);
 
         if (!succeeded) {
-            session.SendWhisper("Role change refused: you may only edit lower-weight users and roles within your access; self-edit and the default role are forbidden. Revoking also requires an existing assignment.");
+            session.SendWhisper("Role change refused: you may only edit lower-weight users and assign roles up to your own weight and access; self-edit and the default role are forbidden. Revoking also requires an existing assignment.");
 
             return;
         }

@@ -124,6 +124,13 @@ public sealed partial class AccessControlDatabaseTests : IDisposable
     }
 
     [AccessControlDatabaseFact]
+    public void StaffCanAssignAndRevokeARoleWithTheirOwnWeight()
+    {
+        Assert.True(_access.AssignRole(_actor, Target, PeerRole));
+        Assert.True(_access.RevokeRole(_actor, Target, PeerRole));
+    }
+
+    [AccessControlDatabaseFact]
     public async Task AccessChangesAndTheirScheduledExpiryResendBothLists()
     {
         using var lists = new ClientAccessLists(_access, ClientAccessListTests.Styles(), ClientAccessListTests.Models());

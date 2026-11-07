@@ -108,13 +108,13 @@ public sealed class AccessControlTests
     }
 
     [Fact]
-    public void AssigningARoleCannotEscalateWeightOrAnyExpandedPermission()
+    public void AssigningARoleAllowsTheActorsOwnWeightButNoHigherOrAnyExpandedPermission()
     {
         var actor = Access(Role(9, 90, [PermissionKeys.HousekeepingRolesManage, "moderation.*"]));
         var target = Access(Role(1, 10, []));
         Assert.True(AccessMutationPolicy.CanAssign(9, 1, actor, target, Role(2, 20, ["moderation.*", "orphan.old_command"]), Registry));
-        Assert.False(AccessMutationPolicy.CanAssign(9, 1, actor, target, Role(2, 90, []), Registry));
-        Assert.False(AccessMutationPolicy.CanAssign(9, 1, actor, target, Role(2, 100, []), Registry));
+        Assert.True(AccessMutationPolicy.CanAssign(9, 1, actor, target, Role(2, 90, []), Registry));
+        Assert.False(AccessMutationPolicy.CanAssign(9, 1, actor, target, Role(2, 91, []), Registry));
         Assert.False(AccessMutationPolicy.CanAssign(9, 1, actor, target, Role(2, 20, ["*"]), Registry));
         Assert.False(AccessMutationPolicy.CanAssign(9, 1, actor, target, Role(2, 20, [PermissionKeys.CameraUse]), Registry));
         Assert.False(AccessMutationPolicy.CanAssign(9, 9, actor, target, Role(2, 20, []), Registry));
