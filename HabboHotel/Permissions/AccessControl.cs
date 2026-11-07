@@ -263,7 +263,7 @@ public sealed class AccessControl : IAccessControl, IDisposable, IStartable
     public bool RevokeRole(Habbo actor, int targetId, int roleId) =>
         Mutate(actor, targetId, "role.revoke", new { roleId }, (connection, transaction, actorAccess, targetAccess) =>
         {
-            if (!TryGetRole(roleId, out var role) || role.Slug == "default" || role.Weight >= actorAccess.Weight) {
+            if (!TryGetRole(roleId, out var role) || role.Slug == "default" || role.Weight > actorAccess.Weight) {
                 return false;
             }
 
