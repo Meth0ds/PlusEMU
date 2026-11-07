@@ -84299,9 +84299,9 @@ LOCK TABLES `catalog_promotions` WRITE;
 /*!40000 ALTER TABLE `catalog_promotions` DISABLE KEYS */;
 INSERT INTO `catalog_promotions` VALUES
 (5,'NEW: Enchanted Broomstick Effect!','catalogue/feature_cata_vert_fx_oct26.png','ny2015_permeffects',1,0,-1,'',NULL),
-(6,'Nightmarish Bedroom Bundle','catalogue/feature_cata_hort_hween20_bun7.png','house20bundd',2,0,-1,'','2026-10-12 10:58:57.000000'),
-(7,'NEW: Dark Academia Furni!','catalogue/feature_cata_hort_NewFurni_Oct26.png','hween26furni',3,0,-1,'','2026-11-02 10:58:57.000000'),
-(8,'NEW: Ducket items!','catalogue/feature_cata_hort_Ducket_Oct26.png','ducket_furni',4,0,-1,'','2026-11-02 10:58:57.000000');
+(6,'Nightmarish Bedroom Bundle','catalogue/feature_cata_hort_hween20_bun7.png','house20bundd',2,0,-1,'','2030-12-31 23:59:59.000000'),
+(7,'NEW: Dark Academia Furni!','catalogue/feature_cata_hort_NewFurni_Oct26.png','hween26furni',3,0,-1,'','2030-12-31 23:59:59.000000'),
+(8,'NEW: Ducket items!','catalogue/feature_cata_hort_Ducket_Oct26.png','ducket_furni',4,0,-1,'','2030-12-31 23:59:59.000000');
 /*!40000 ALTER TABLE `catalog_promotions` ENABLE KEYS */;
 UNLOCK TABLES;
 
