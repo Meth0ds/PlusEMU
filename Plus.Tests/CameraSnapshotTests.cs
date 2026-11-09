@@ -100,8 +100,14 @@ public class CameraSnapshotTests
     {
         var ad = Ad(7, new Dictionary<string, string>
         {
-            ["state"] = "0", ["imageUrl"] = "https://images.example/hotel.png", ["clickUrl"] = "https://hotel.example",
-            ["offsetX"] = "-120", ["offsetY"] = "40", ["offsetZ"] = "3", ["scale"] = "80", ["alpha"] = "50"
+            ["state"] = "0",
+            ["imageUrl"] = "https://images.example/hotel.png",
+            ["clickUrl"] = "https://hotel.example",
+            ["offsetX"] = "-120",
+            ["offsetY"] = "40",
+            ["offsetZ"] = "3",
+            ["scale"] = "80",
+            ["alpha"] = "50"
         });
         var plain = Ad(8, new Dictionary<string, string> { ["state"] = "0", ["imageUrl"] = "http://images.example/plain.png" });
 
