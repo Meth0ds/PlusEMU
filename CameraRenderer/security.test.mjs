@@ -160,6 +160,24 @@ test('scene strings cannot carry a remote image URL', () => {
     assert.equal(validateJob(mintedScene, catalogue).scene.items[0].extraData, `/camera/${minted}.png`);
 });
 
+test('a room ad is the one scene item that may carry a web address, its image', () => {
+    const branding = { imageUrl: 'https://images.example/ad.png', offsetX: -120, offsetY: 40, offsetZ: 3, scale: 100, alpha: 100 };
+    const withItem = item => ({ ...job(320, 320), scene: { ...job(320, 320).scene, items: [item] } });
+    assert.equal(validateJob(withItem({ id: 7, extraData: '', branding }), catalogue).scene.items[0].branding.imageUrl, branding.imageUrl);
+    assert.equal(validatePreparation({ scene: withItem({ id: 7, branding: null }).scene }).scene.items[0].branding, null);
+    assert.throws(() => validateJob(withItem({ id: 7, extraData: 'https://evil.example/a.png', branding }), catalogue), /URL in scene/);
+    for (const imageUrl of ['javascript:alert(1)', 'https:/images.example/ad.png', 'https://user:secret@images.example/ad.png', 'https://images.example:8080/ad.png', 'http://images.example:80/ad.png']) {
+        assert.deepEqual(validateJob(withItem({ id: 7, branding: { ...branding, imageUrl } }), catalogue).scene.items, [], imageUrl);
+    }
+    for (const bad of [
+        { ...branding, imageUrl: 42 },
+        { ...branding, clickUrl: 'https://evil.example' },
+        { ...branding, offsetX: 1.5 },
+        { imageUrl: branding.imageUrl },
+        'https://images.example/ad.png'
+    ]) assert.throws(() => validateJob(withItem({ id: 7, branding: bad }), catalogue), /Invalid room ad/, JSON.stringify(bad));
+});
+
 test('an empty effect catalogue still accepts a capture with no effects', () => {
     assert.deepEqual(buildEffectCatalogue(undefined), []);
     assert.deepEqual(buildEffectCatalogue([]), []);
